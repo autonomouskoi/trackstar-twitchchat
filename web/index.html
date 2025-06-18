@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Trackstar Twitch Chat Configuration</title>
+        <link href="/titillium.css" rel="stylesheet">
+        <link href="/main.css" rel="stylesheet">
+    </head>
+    <body>
+        <div id="mainContainer">
+        </div>
+    </body>
+    <script type="importmap">
+        {
+            "imports": {
+                "@bufbuild/protobuf": "/protobuf/index.js"
+            }
+        }
+    </script>
+    <script type="module">
+import("./embed_ctrl.js").then((mod) => {
+    let mainContainer = document.querySelector('#mainContainer');
+    mod.start(mainContainer);
+});
+    </script>
+</html>

@@ -1,0 +1,43 @@
+syntax = "proto3";
+package twitchchat;
+
+option go_package = "github.com/autonomouskoi/trackstar-twitchchat";
+
+enum BusTopics {
+    TRACKSTAR_TWITCH_CHAT_EVENT   = 0;
+    TRACKSTAR_TWITCH_CHAT_REQUEST = 1;
+    TRACKSTAR_TWITCH_CHAT_COMMAND = 2;
+}
+
+enum MessageTypeRequest {
+    CONFIG_GET_REQ      = 0;
+    CONFIG_GET_RESP     = 1;
+    TRACK_ANNOUNCE_REQ  = 2;
+    TRACK_ANNOUNCE_RESP = 3;
+}
+
+enum MessageTypeCommand {
+    UNSPECIFIED     = 0;    
+    CONFIG_SET_REQ  = 1;
+    CONFIG_SET_RESP = 2;
+}
+
+message Config {
+    bool    announce = 1;
+    string  template = 2;
+}
+
+message ConfigGetRequest {}
+message ConfigGetResponse {
+    Config  config = 1;
+}
+
+message ConfigSetRequest {
+    Config  config = 1;
+}
+message ConfigSetResponse {
+    Config  config = 1;
+}
+
+message TrackAnnounceRequest {}
+message TrackAnnounceResponse {}
