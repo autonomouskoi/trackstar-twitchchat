@@ -25,6 +25,8 @@ enum MessageTypeCommand {
 message Config {
     bool    announce = 1;
     string  template = 2;
+    string  send_as  = 3;
+    string  send_to  = 4;
 }
 
 message ConfigGetRequest {}

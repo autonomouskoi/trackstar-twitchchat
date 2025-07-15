@@ -3,12 +3,20 @@ import * as buspb from "/pb/bus/bus_pb.js";
 import * as tstc from "/m/trackstar-twitchchat/pb/twitchchat_pb.js";
 import { Cfg } from './controller.js';
 import { UpdatingControlPanel } from '/tk.js';
+import { ProfileSelector } from '/m/twitch/profiles.js';
 
 const TOPIC_REQUEST = enumName(tstc.BusTopics, tstc.BusTopics.TRACKSTAR_TWITCH_CHAT_REQUEST);
 
 let help = document.createElement('div');
 help.innerHTML = `
 <section>
+<p>
+<em>Send As</em> selects which profile will be used to send tracks to Twitch chat.
+</p>
+<p>
+<em>To Channel</em> selects which profile represents the channel to send messages to.
+</p>
+
 <p>
 <em>Announce New Tracks</em> will cause each new track to be announced in chat.
 Some may find this option spammy. When changed, the change takes effect immediately.
@@ -85,11 +93,19 @@ class Config extends UpdatingControlPanel<tstc.Config> {
     private _announceCheck: HTMLInputElement;
     private _templateInput: HTMLTextAreaElement;
     private _saveButton: HTMLButtonElement;
+    private _sendAs: ProfileSelector
+    private _sendTo: ProfileSelector
 
     constructor(cfg: Cfg) {
         super({ title: 'Twitch Chat Configuration', help, data: cfg });
+
+        let sendAsTitle = 'Which Twitch profile to send chat messages as';
+        let sendToTitle = 'Which channel to send messages to';
         this.innerHTML = `
 <div class="grid grid-2-col">
+    <label for="send-as" title="${sendAsTitle}">Send As</label>
+    <label for="send-to" title="${sendToTitle}">To Channel</label>
+
 <label for="check-announce">Announce New Tracks</label>
 <input id="check-announce" type="checkbox" />
 
@@ -111,12 +127,27 @@ class Config extends UpdatingControlPanel<tstc.Config> {
         this._saveButton = this.querySelector('#btn-save');
         this._saveButton.addEventListener('click', () => this.saveConfig());
 
+        this._sendAs = new ProfileSelector();
+        this._sendAs.id = 'save-as';
+        this._sendAs.title = sendAsTitle;
+        this._sendAs.addEventListener('change', () => this.saveConfig());
+
+        this._sendTo = new ProfileSelector();
+        this._sendTo.id = 'save-to';
+        this._sendTo.title = sendToTitle;
+        this._sendTo.addEventListener('change', () => this.saveConfig());
+
+        this.querySelector('label[for="send-as"]').after(this._sendAs);
+        this.querySelector('label[for="send-to"]').after(this._sendTo);
+
         cfg.subscribe((newCfg) => this.update(newCfg));
     }
 
     update(cfg: tstc.Config) {
         this._announceCheck.checked = cfg.announce;
         this._templateInput.value = cfg.template;
+        this._sendAs.selected = cfg.sendAs;
+        this._sendTo.selected = cfg.sendTo;
     }
 
     saveConfig() {
@@ -124,6 +155,8 @@ class Config extends UpdatingControlPanel<tstc.Config> {
 
         cfg.announce = this._announceCheck.checked;
         cfg.template = this._templateInput.value;
+        cfg.sendAs = this._sendAs.value;
+        cfg.sendTo = this._sendTo.value;
         this.save(cfg);
     }
 

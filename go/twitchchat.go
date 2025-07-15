@@ -50,6 +50,26 @@ func New() (*Chat, error) {
 		return nil, fmt.Errorf("loading config: %w", err)
 	}
 
+	if c.cfg.SendAs == "" {
+		resp, err := twitch.ListProfiles(&twitch.ListProfilesRequest{})
+		if err != nil {
+			return nil, fmt.Errorf("listing twitch profile: %w", err)
+		}
+		if len(resp.Names) == 0 {
+			return nil, fmt.Errorf("no available profiles")
+		}
+		c.cfg.SendAs = resp.Names[0]
+		if err := c.writeCfg(); err != nil {
+			return nil, fmt.Errorf("writing config: %w", err)
+		}
+	}
+	if c.cfg.SendTo == "" {
+		c.cfg.SendAs = c.cfg.SendTo
+		if err := c.writeCfg(); err != nil {
+			return nil, fmt.Errorf("writing config: %w", err)
+		}
+	}
+
 	if strings.TrimSpace(c.cfg.Template) == "" {
 		c.cfg.Template = defaultTemplate
 	}
@@ -86,6 +106,14 @@ func (c *Chat) handleRequestGetConfig(msg *bus.BusMessage) *bus.BusMessage {
 	return reply
 }
 
+func (c *Chat) writeCfg() error {
+	if err := bus.KVSetProto(cfgKVKey, c.cfg); err != nil {
+		bus.LogError("saving config", "error", err.Error())
+		return err
+	}
+	return nil
+}
+
 func (c *Chat) handleCommandSetConfig(msg *bus.BusMessage) *bus.BusMessage {
 	reply := bus.DefaultReply(msg)
 	req := ConfigSetRequest{}
@@ -93,7 +121,8 @@ func (c *Chat) handleCommandSetConfig(msg *bus.BusMessage) *bus.BusMessage {
 		return reply
 	}
 
-	if err := bus.KVSetProto(cfgKVKey, req.GetConfig()); err != nil {
+	c.cfg = req.GetConfig()
+	if err := c.writeCfg(); err != nil {
 		errStr := err.Error()
 		bus.LogError("saving config", "error", errStr)
 		reply.Error = &bus.Error{
@@ -101,7 +130,6 @@ func (c *Chat) handleCommandSetConfig(msg *bus.BusMessage) *bus.BusMessage {
 		}
 		return reply
 	}
-	c.cfg = req.GetConfig()
 	bus.MarshalMessage(reply, &ConfigSetResponse{Config: c.cfg})
 	return reply
 }
@@ -140,7 +168,9 @@ func (c *Chat) sendTrackUpdate(tu *trackstar.TrackUpdate) {
 		Type:  int32(twitch.MessageTypeTwitchChatRequest_TWITCH_CHAT_REQUEST_TYPE_SEND_REQ),
 	}
 	bus.MarshalMessage(msg, &twitch.TwitchChatRequestSendRequest{
-		Text: output,
+		Text:    output,
+		Profile: c.cfg.SendAs,
+		Channel: c.cfg.SendTo,
 	})
 	if msg.Error != nil {
 		return

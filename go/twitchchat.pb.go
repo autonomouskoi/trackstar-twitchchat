@@ -127,6 +127,8 @@ type Config struct {
 	unknownFields []byte
 	Announce      bool   `protobuf:"varint,1,opt,name=announce,proto3" json:"announce,omitempty"`
 	Template      string `protobuf:"bytes,2,opt,name=template,proto3" json:"template,omitempty"`
+	SendAs        string `protobuf:"bytes,3,opt,name=send_as,json=sendAs,proto3" json:"sendAs,omitempty"`
+	SendTo        string `protobuf:"bytes,4,opt,name=send_to,json=sendTo,proto3" json:"sendTo,omitempty"`
 }
 
 func (x *Config) Reset() {
@@ -145,6 +147,20 @@ func (x *Config) GetAnnounce() bool {
 func (x *Config) GetTemplate() string {
 	if x != nil {
 		return x.Template
+	}
+	return ""
+}
+
+func (x *Config) GetSendAs() string {
+	if x != nil {
+		return x.SendAs
+	}
+	return ""
+}
+
+func (x *Config) GetSendTo() string {
+	if x != nil {
+		return x.SendTo
 	}
 	return ""
 }
@@ -240,6 +256,8 @@ func (m *Config) CloneVT() *Config {
 	r := new(Config)
 	r.Announce = m.Announce
 	r.Template = m.Template
+	r.SendAs = m.SendAs
+	r.SendTo = m.SendTo
 	if len(m.unknownFields) > 0 {
 		r.unknownFields = make([]byte, len(m.unknownFields))
 		copy(r.unknownFields, m.unknownFields)
@@ -360,6 +378,12 @@ func (this *Config) EqualVT(that *Config) bool {
 		return false
 	}
 	if this.Template != that.Template {
+		return false
+	}
+	if this.SendAs != that.SendAs {
+		return false
+	}
+	if this.SendTo != that.SendTo {
 		return false
 	}
 	return string(this.unknownFields) == string(that.unknownFields)
@@ -616,6 +640,16 @@ func (x *Config) MarshalProtoJSON(s *json.MarshalState) {
 		s.WriteObjectField("template")
 		s.WriteString(x.Template)
 	}
+	if x.SendAs != "" || s.HasField("sendAs") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("sendAs")
+		s.WriteString(x.SendAs)
+	}
+	if x.SendTo != "" || s.HasField("sendTo") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("sendTo")
+		s.WriteString(x.SendTo)
+	}
 	s.WriteObjectEnd()
 }
 
@@ -639,6 +673,12 @@ func (x *Config) UnmarshalProtoJSON(s *json.UnmarshalState) {
 		case "template":
 			s.AddField("template")
 			x.Template = s.ReadString()
+		case "send_as", "sendAs":
+			s.AddField("send_as")
+			x.SendAs = s.ReadString()
+		case "send_to", "sendTo":
+			s.AddField("send_to")
+			x.SendTo = s.ReadString()
 		}
 	})
 }
@@ -896,6 +936,20 @@ func (m *Config) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m.unknownFields != nil {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
+	}
+	if len(m.SendTo) > 0 {
+		i -= len(m.SendTo)
+		copy(dAtA[i:], m.SendTo)
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(len(m.SendTo)))
+		i--
+		dAtA[i] = 0x22
+	}
+	if len(m.SendAs) > 0 {
+		i -= len(m.SendAs)
+		copy(dAtA[i:], m.SendAs)
+		i = protobuf_go_lite.EncodeVarint(dAtA, i, uint64(len(m.SendAs)))
+		i--
+		dAtA[i] = 0x1a
 	}
 	if len(m.Template) > 0 {
 		i -= len(m.Template)
@@ -1158,6 +1212,14 @@ func (m *Config) SizeVT() (n int) {
 	if l > 0 {
 		n += 1 + l + protobuf_go_lite.SizeOfVarint(uint64(l))
 	}
+	l = len(m.SendAs)
+	if l > 0 {
+		n += 1 + l + protobuf_go_lite.SizeOfVarint(uint64(l))
+	}
+	l = len(m.SendTo)
+	if l > 0 {
+		n += 1 + l + protobuf_go_lite.SizeOfVarint(uint64(l))
+	}
 	n += len(m.unknownFields)
 	return n
 }
@@ -1314,6 +1376,70 @@ func (m *Config) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			m.Template = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SendAs", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protobuf_go_lite.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return protobuf_go_lite.ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return protobuf_go_lite.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.SendAs = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SendTo", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protobuf_go_lite.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return protobuf_go_lite.ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return protobuf_go_lite.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.SendTo = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
