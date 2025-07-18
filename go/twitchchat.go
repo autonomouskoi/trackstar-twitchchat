@@ -19,12 +19,12 @@ const (
 )
 
 var (
-	topic_request = BusTopics_TRACKSTAR_TWITCH_CHAT_REQUEST.String()
-	topic_command = BusTopics_TRACKSTAR_TWITCH_CHAT_COMMAND.String()
-
+	topic_request         = BusTopics_TRACKSTAR_TWITCH_CHAT_REQUEST.String()
+	topic_command         = BusTopics_TRACKSTAR_TWITCH_CHAT_COMMAND.String()
 	topic_trackstar_event = trackstar.BusTopic_TRACKSTAR_EVENT.String()
+	topic_chat_event      = twitch.BusTopics_TWITCH_EVENTSUB_EVENT.String()
 
-	topic_chat_event = twitch.BusTopics_TWITCH_EVENTSUB_EVENT.String()
+	topicTwitchRequest = twitch.BusTopics_TWITCH_REQUEST.String()
 
 	cfgKVKey = []byte("config")
 )
@@ -35,19 +35,23 @@ type Chat struct {
 }
 
 func New() (*Chat, error) {
-	for _, topic := range []string{topic_request, topic_command, topic_chat_event, topic_trackstar_event} {
-		bus.LogDebug("subscribing", "topic", topic)
-		if err := bus.Subscribe(topic); err != nil {
-			return nil, fmt.Errorf("subscribing to %s", topic)
-		}
-		bus.LogDebug("subscribed", "topic", topic)
-	}
-
 	c := &Chat{
 		cfg: &Config{},
 	}
 	if err := c.loadCfg(); err != nil && !errors.Is(err, akcore.ErrNotFound) {
 		return nil, fmt.Errorf("loading config: %w", err)
+	}
+
+	// we can't do anything without twitch. Wait for it to be ready
+	bus.LogDebug("waiting for topic", "topic", topicTwitchRequest)
+	for {
+		hasTopic, err := bus.HasTopic(topicTwitchRequest, 1000)
+		if err != nil {
+			return nil, fmt.Errorf("waiting for topic %q: %w", topicTwitchRequest, err)
+		}
+		if hasTopic {
+			break
+		}
 	}
 
 	if c.cfg.SendAs == "" {
@@ -89,6 +93,14 @@ func New() (*Chat, error) {
 			int32(trackstar.MessageTypeEvent_TRACK_UPDATE): c.handleTrackUpdate,
 		},
 	}
+
+	for topic := range c.router {
+		if err := bus.Subscribe(topic); err != nil {
+			return nil, fmt.Errorf("subscribing to %s", topic)
+		}
+		bus.LogDebug("subscribed", "topic", topic)
+	}
+
 	return c, nil
 }
 

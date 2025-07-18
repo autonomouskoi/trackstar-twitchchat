@@ -3,9 +3,11 @@ import * as buspb from "/pb/bus/bus_pb.js";
 import * as tstc from "/m/trackstar-twitchchat/pb/twitchchat_pb.js";
 import { Cfg } from './controller.js';
 import { UpdatingControlPanel } from '/tk.js';
+import * as twitchpb from '/m/twitch/pb.js';
 import { ProfileSelector } from '/m/twitch/profiles.js';
 
 const TOPIC_REQUEST = enumName(tstc.BusTopics, tstc.BusTopics.TRACKSTAR_TWITCH_CHAT_REQUEST);
+const TOPIC_TWITCH_REQUEST = enumName(twitchpb.BusTopics, twitchpb.BusTopics.TWITCH_REQUEST);
 
 let help = document.createElement('div');
 help.innerHTML = `
@@ -127,6 +129,7 @@ class Config extends UpdatingControlPanel<tstc.Config> {
         this._saveButton = this.querySelector('#btn-save');
         this._saveButton.addEventListener('click', () => this.saveConfig());
 
+        let getProfiles = () => { };
         this._sendAs = new ProfileSelector();
         this._sendAs.id = 'save-as';
         this._sendAs.title = sendAsTitle;
@@ -140,7 +143,7 @@ class Config extends UpdatingControlPanel<tstc.Config> {
         this.querySelector('label[for="send-as"]').after(this._sendAs);
         this.querySelector('label[for="send-to"]').after(this._sendTo);
 
-        cfg.subscribe((newCfg) => this.update(newCfg));
+        //cfg.subscribe((newCfg) => this.update(newCfg));
     }
 
     update(cfg: tstc.Config) {
@@ -177,8 +180,16 @@ customElements.define('trackstar-twitchchat-config', Config, { extends: 'fieldse
 function start(mainContainer: HTMLElement) {
     let cfg = new Cfg();
 
-    mainContainer.appendChild(new Config(cfg));
-    cfg.refresh();
+    mainContainer.textContent = 'Waiting for the Twitch module';
+    bus.waitForTopic(TOPIC_TWITCH_REQUEST, 100000)
+        .then(() => {
+            mainContainer.textContent = `Waiting for Banter module`;
+            return bus.waitForTopic(TOPIC_REQUEST, 1000000);
+        }).then(() => {
+            mainContainer.textContent = '';
+            mainContainer.appendChild(new Config(cfg));
+            cfg.refresh();
+        })
 }
 
 export { start };
